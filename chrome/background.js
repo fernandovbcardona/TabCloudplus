@@ -17,6 +17,10 @@ chrome.runtime.onMessage.addListener(
             return false;
         }
 
+        // Fire-and-forget: nothing calls sendResponse, and popup.js's
+        // sendMessage() doesn't wait for one either, so there's no reason
+        // to keep the message channel open (that's what was causing the
+        // "message channel closed before a response was received" warning).
         (async function () {
             await Storage.ready;
 
@@ -63,6 +67,6 @@ chrome.runtime.onMessage.addListener(
             }
         })();
 
-        return true;
+        return false;
     }
 );

@@ -4,6 +4,18 @@ $(function() {
                 await Storage.ready;
                 await SyncStore.ready;
 
+                // Defined up front (instead of near the bottom, like the
+                // original code) so it's always available no matter which
+                // order the async callbacks below end up firing in.
+                var scroll = $('#scrollbar');
+                scroll.tinyscrollbar({
+                    axis : 'y'
+                });
+                var updateScroll = function() {
+                    $('.viewport').height(Math.min($('.overview').height(), 500));
+                    scroll.data("plugin_tinyscrollbar").update();
+                }
+
                 var handleSyncError = function (e) {
                     if (e && e.message === 'window_too_large') {
                         alert("This window is too large to sync (Chrome sync limits each saved window to about 8KB). Try saving it with fewer tabs.");
@@ -587,15 +599,6 @@ $(function() {
                     containerheight : '1em'
                 });
 
-                var scroll = $('#scrollbar');
-                scroll.tinyscrollbar({
-                    axis : 'y'
-                });
-
-                var updateScroll = function() {
-                    $('.viewport').height(Math.min($('.overview').height(), 500));
-                    scroll.data("plugin_tinyscrollbar").update();
-                }
                 updateScroll();
 
                 // Show body (hidden to make loading less horrible)
