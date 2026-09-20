@@ -10,7 +10,7 @@
 
 The original Chrome Web Store listing was **taken down because the extension still ran on Manifest V2**, which Chrome has been phasing out and disabling for most users. This fork exists to migrate the extension to **Manifest V3** and, from there, get it republished and revived on the Chrome Web Store — not just kept alive as a locally-loaded unpacked extension.
 
-📁 The Chrome extension lives in [`chrome/`](chrome). The Firefox and Android folders in this repo are **not** maintained by this fork.
+📁 The Chrome extension lives in [`chrome/`](chrome). This fork is Chrome-only: the original repo's Firefox, Android, and App Engine (`appengine-java`) folders have been removed here, since there's no intention to update or maintain them.
 
 ---
 
