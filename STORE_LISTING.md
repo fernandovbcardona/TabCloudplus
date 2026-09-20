@@ -38,6 +38,10 @@ Source code: https://github.com/fernandovbcardona/TabCloudplus
 
 Productivity
 
+## Single purpose description (Developer Dashboard "Privacy practices" tab)
+
+TabCloud+ lets users save the set of tabs open in a browser window and restore that same window later, on the same computer or a different one signed into the same Chrome account.
+
 ## Permission justifications (Developer Dashboard "Privacy practices" tab)
 
 - **tabs**: "Used to read the URL, title and favicon of tabs when the user saves a window, and to open tabs when the user restores a previously saved window."
