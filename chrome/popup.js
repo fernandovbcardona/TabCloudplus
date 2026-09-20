@@ -449,10 +449,10 @@ $(function() {
                     $('#backendBadge').hide();
                     $('#onboarding').show().html(
                         '<strong>First time here?</strong><br/>' +
-                        'Saved windows now sync through Chrome itself (chrome.storage.sync), not through the old TabCloud cloud account &mdash; that server isn\'t run by this fork and could disappear at any time.' +
+                        'Saved tabs now sync through Chrome itself (chrome.storage.sync) &mdash; free, and with no external service to depend on &mdash; instead of the old TabCloud cloud account, which isn\'t run by this fork and could disappear at any time.' +
                         '<div id="onboardingStatus" style="margin-top:6px;"></div>' +
                         '<div>' +
-                        '<button id="onboardingImport">Check my old account</button>' +
+                        '<button id="onboardingImport">Import to Local and Start Using</button>' +
                         '<button id="onboardingFresh">Start fresh</button>' +
                         '</div>'
                     );
@@ -576,16 +576,6 @@ $(function() {
                 $('#migrationlink').on('click', function(e) {
                     e.preventDefault();
                     chrome.tabs.create({url: chrome.runtime.getURL('options.html') + '#import'});
-                });
-
-                $('#ratelink').on('click', function(e) {
-                    e.preventDefault();
-                    chrome.tabs.create({url: 'https://chrome.google.com/extensions/detail/npecfdijgoblfcgagoijgmgejmcpnhof?from-popup'});
-                });
-
-                $('#oxylink').on('click', function(e) {
-                    e.preventDefault();
-                    chrome.tabs.create({url: 'https://chrome.google.com/webstore/detail/mhbpdpdhlphdadlbohghnncgdlbfbdho'});
                 });
 
                 // Tips
