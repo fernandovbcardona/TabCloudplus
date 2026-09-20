@@ -2,13 +2,15 @@ $(function() {
     setTimeout(
             async function() {
                 await Storage.ready;
+                await SyncStore.ready;
 
-                // Protect against XSRF attacks
-                jQuery.ajaxSetup({
-                    'beforeSend' : function(xhr) {
-                        xhr.setRequestHeader('X-XSRF-Protection', 'true');
+                var handleSyncError = function (e) {
+                    if (e && e.message === 'window_too_large') {
+                        alert("This window is too large to sync (Chrome sync limits each saved window to about 8KB). Try saving it with fewer tabs.");
+                    } else {
+                        console.error('sync error', e);
                     }
-                })
+                };
 
                 var getWindowName = function(name) {
                     var tempWindowNames = Storage.get('tempWindowNames');
@@ -65,10 +67,7 @@ $(function() {
                                             data.tabs.splice(tab.substring(7), 1);
                                             data.name = getWindowName(oldWindow);
                                             // Send new array
-                                            $.post('https://chrometabcloud.appspot.com/update', {
-                                                window : JSON.stringify(data),
-                                                windowId : oldWindow.substring(4)
-                                            });
+                                            SyncStore.updateAt(parseInt(oldWindow.substring(4), 10), data).catch(handleSyncError);
                                         }
                                         $(ui.item[0]).detach();
                                     } else {
@@ -99,10 +98,7 @@ $(function() {
                                             });
                                             data.name = getWindowName(newWindow);
                                             // Send new array
-                                            $.post('https://chrometabcloud.appspot.com/update', {
-                                                window : JSON.stringify(data),
-                                                windowId : newWindow.substring(4)
-                                            });
+                                            SyncStore.updateAt(parseInt(newWindow.substring(4), 10), data).catch(handleSyncError);
 
                                             // Remove from local
                                             chrome.tabs.remove(parseInt(tab.substring(7), 10));
@@ -134,10 +130,7 @@ $(function() {
                                             data.tabs.splice(tab.substring(7), 1);
                                             data.name = getWindowName(oldWindow);
                                             // Send new array
-                                            $.post('https://chrometabcloud.appspot.com/update', {
-                                                window : JSON.stringify(data),
-                                                windowId : oldWindow.substring(4)
-                                            });
+                                            SyncStore.updateAt(parseInt(oldWindow.substring(4), 10), data).catch(handleSyncError);
 
                                             // Update image
                                             $child.attr('windowid', newWindow);
@@ -166,10 +159,7 @@ $(function() {
                                                 });
                                                 data.name = getWindowName(newWindow);
                                                 // Send new array
-                                                $.post('https://chrometabcloud.appspot.com/update', {
-                                                    window : JSON.stringify(data),
-                                                    windowId : newWindow.substring(4)
-                                                });
+                                                SyncStore.updateAt(parseInt(newWindow.substring(4), 10), data).catch(handleSyncError);
 
                                                 // Remove from 2nd
                                                 // Remove from array
@@ -177,10 +167,7 @@ $(function() {
                                                 data.tabs.splice(tab.substring(7), 1);
                                                 data.name = getWindowName(oldWindow);
                                                 // Send new array
-                                                $.post('https://chrometabcloud.appspot.com/update', {
-                                                    window : JSON.stringify(data),
-                                                    windowId : oldWindow.substring(4)
-                                                });
+                                                SyncStore.updateAt(parseInt(oldWindow.substring(4), 10), data).catch(handleSyncError);
                                                 // Update image
                                                 $child.attr('windowid', newWindow);
 
@@ -209,12 +196,11 @@ $(function() {
                         containment : 'parent',
                         tolerance : 'pointer',
                         update : function(e, ui) {
-                            $.post('https://chrometabcloud.appspot.com/move', {
-                                oldIndex : parseInt(ui.item[0].id.substring(4), 10),
-                                newIndex : $('#saved > fieldset').index($(ui.item[0]))
-                            }, function() {
-                                updateTabs();
-                            });
+                            var oldIndex = parseInt(ui.item[0].id.substring(4), 10);
+                            var newIndex = $('#saved > fieldset').index($(ui.item[0]));
+                            SyncStore.moveAt(oldIndex, newIndex).then(function() {
+                                renderSavedWindows();
+                            }).catch(handleSyncError);
                         }
                     });
                 };
@@ -289,10 +275,7 @@ $(function() {
                     if (windowId.substring(3, 4) == 'r') {
                         var data = TCWindows[windowId.substring(4)];
                         data.name = getWindowName(windowId);
-                        $.post('https://chrometabcloud.appspot.com/update', {
-                            window : JSON.stringify(data),
-                            windowId : windowId.substring(4)
-                        });
+                        SyncStore.updateAt(parseInt(windowId.substring(4), 10), data).catch(handleSyncError);
                         // if this window is tracked by a local
                         // window, update the local windows name
                         // as well
@@ -360,32 +343,32 @@ $(function() {
                          */
                         var trackedWindows = Storage.get('trackedWindows');
                         var trackedWindowId = trackedWindows[windowId];
+                        var onSaveFailed = function(e) {
+                            handleSyncError(e);
+                            $(img).attr('src', 'images/disk.png').addClass('windowsave');
+                        };
                         if (trackedWindowId === undefined) {
-                            $.post('https://chrometabcloud.appspot.com/add', {
-                                window : JSON.stringify(data)
-                            }, function() {
+                            SyncStore.addFront(data).then(function(newIndex) {
                                 $(img).attr('src', 'images/accept.png');
                                 $(img).attr('title', 'Window saved');
                                 /*
                                  * add local window to tracked windows, the
                                  * remote windowId is unknown at this point, but
-                                 * it will eventually be updated in updateTabs()
-                                 * when build the trackedWindows * db.
+                                 * it will eventually be updated in
+                                 * renderSavedWindows() when build the
+                                 * trackedWindows * db.
                                  */
-                                trackedWindows[windowId] = -1;
+                                trackedWindows[windowId] = newIndex;
                                 Storage.set('trackedWindows', trackedWindows);
-                                updateTabs();
+                                renderSavedWindows();
 
-                            });
+                            }).catch(onSaveFailed);
                         } else {
-                            $.post('https://chrometabcloud.appspot.com/update', {
-                                window : JSON.stringify(data),
-                                windowId : trackedWindowId
-                            }, function() {
+                            SyncStore.updateAt(trackedWindowId, data).then(function() {
                                 $(img).attr('src', 'images/accept.png');
                                 $(img).attr('title', 'Window saved');
-                                updateTabs();
-                            });
+                                renderSavedWindows();
+                            }).catch(onSaveFailed);
 
                         }
                     });
@@ -407,15 +390,12 @@ $(function() {
                     } else {
                         var windowId = parseInt($(this).parent().parent().attr('id').substring(4), 10);
                         $(this).attr('src', 'images/arrow_refresh.png');
-                        var self = this;
-                        $.post('https://chrometabcloud.appspot.com/remove', {
-                            window : windowId
-                        }, function() {
+                        SyncStore.removeAt(windowId).then(function() {
                             // remove the tracking info in the db
                             removeTrackRecByRWinId(windowId);
                             // remove local window Names
                             deleteWindowName('winr' + windowId);
-                            updateTabs();
+                            renderSavedWindows();
                         });
                     }
                 });
@@ -423,15 +403,12 @@ $(function() {
                 $(document).on('click', '.windowreallydelete', function(e) {
                     var windowId = parseInt($(this).parent().parent().parent().attr('id').substring(4), 10);
                     $(this).attr('src', 'images/arrow_refresh.png');
-                    var self = this;
-                    $.post('https://chrometabcloud.appspot.com/remove', {
-                        window : windowId
-                    }, function() {
+                    SyncStore.removeAt(windowId).then(function() {
                         // remove the tracking info in the db
                         removeTrackRecByRWinId(windowId);
                         // remove local window Names
                         deleteWindowName('winr' + windowId);
-                        updateTabs();
+                        renderSavedWindows();
                     });
                 });
 
@@ -453,7 +430,7 @@ $(function() {
 
                 $(document).on('click', '.windowreallyclose', function(e) {
                     var windowId = parseInt($(this).parent().parent().parent().attr('id').substring(4), 10);
-                    deleteWindowNames('winl' + windowId);
+                    deleteWindowName('winl' + windowId);
                     chrome.windows.remove(windowId);
 
                     var trackedWindows = Storage.get('trackedWindows');
@@ -470,88 +447,57 @@ $(function() {
 
                 var TCWindows = [];
 
-                var updateTabs = function(triedAutoLogin) {
-                    setInfo('Loading...');
-                    $
-                            .get(
-                                    'https://chrometabcloud.appspot.com/tabcloud',
-                                    function(data) {
-                                        if (data.status !== undefined) {
-                                            if (data.status == 'loggedin') {
-                                                if (data.windows.length == 0) {
-                                                    setInfo('You haven\'t saved any windows yet!');
-                                                } else {
-                                                    $('#saved').html("");
-                                                    TCWindows = data.windows;
-                                                    var i = 0;
-                                                    var newTrackedWindows = {};
-                                                    data.windows
-                                                            .forEach(function(curWindow) {
-                                                                setWindowName('winr' + i, curWindow.name);
-                                                                var winString = '<fieldset class="window" id="winr'
-                                                                        + i
-                                                                        + '"><legend class="windowname">'
-                                                                        + curWindow.name
-                                                                        + '</legend><span class="right"><img class="windowdelete" src="images/delete.png" title="Delete window"><img class="windowopen" src="images/add.png" title="Open window"></span><div class="tabs">';
-                                                                var ti = 0;
-                                                                curWindow.tabs.forEach(function(curTab) {
-                                                                    var altFavicon = Favicon.getFavicon(curTab.url);
-                                                                    var favicon = (curTab.favicon != '' && curTab.favicon !== undefined) ? curTab.favicon : altFavicon;
-                                                                    winString += '<div style="float: left"><img id="tabimgr' + (ti++) + '" windowid="winr' + i + '" class="tabimg" src_orig="' + favicon +'" src_alt="' + altFavicon + '" url="' + curTab.url + '" title="' + curTab.title.replace(/\"/g, "'") + '"/></div>';
-                                                                });
-                                                                winString += '</div></fieldset>';
-                                                                $('#saved').append(winString);
-                                                                $("#saved .tabimg").each(function(){
-                                                                    var $this=$(this);
-                                                                    $this.one('error', function(){
-                                                                        $this.attr('src', $this.attr('src_alt'));
-                                                                    });
-                                                                    $this.attr('src', $this.attr('src_orig'));
-                                                                });
-                                                                // update tracking window db, since the remote window id might bechanged after ADD and
-                                                                // DELETE operations
-                                                                var trackedWindows = Storage.get('trackedWindows');
-                                                                for ( var localWindowId in trackedWindows) {
-                                                                    //console.log(curWindow.name);
-                                                                   //console.log(getWindowName('winl' + localWindowId));
-                                                                    if (curWindow.name === getWindowName('winl' + localWindowId)) {
-                                                                        newTrackedWindows[localWindowId] = i;
-                                                                    }
-                                                                }
-                                                                i++;
-                                                            });
-                                                    // update trackedWindows
-                                                    Storage.set('trackedWindows', newTrackedWindows);
-                                                    makeSortable();
-                                                    updateScroll();
-                                                }
-                                            } else {
-                                                if (triedAutoLogin === true) {
-                                                    setInfo('TabCloud requires you login to load your saved windows<br /><a target="_blank" href="https://chrometabcloud.appspot.com/login">Click here to login</a>');
-                                                } else {
-                                                    setInfo('Attempting automatic login...<iframe style="height: 1px; width: 1px; opacity: 0; position: absolute" src="https://chrometabcloud.appspot.com/login"></iframe>');
-                                                    setTimeout(function() {
-                                                        updateTabs(true);
-                                                    }, 1000);
-                                                }
-                                            }
-                                        } else {
-                                            setInfo('Server error, try again later.');
-                                        }
-                                    }, 'json');
+                var renderSavedWindows = function() {
+                    var winList = SyncStore.list();
+                    TCWindows = winList;
+                    if (winList.length == 0) {
+                        setInfo('You haven\'t saved any windows yet!');
+                        return;
+                    }
+                    $('#saved').html("");
+                    var newTrackedWindows = {};
+                    winList.forEach(function(curWindow, i) {
+                        setWindowName('winr' + i, curWindow.name);
+                        var winString = '<fieldset class="window" id="winr'
+                                + i
+                                + '"><legend class="windowname">'
+                                + curWindow.name
+                                + '</legend><span class="right"><img class="windowdelete" src="images/delete.png" title="Delete window"><img class="windowopen" src="images/add.png" title="Open window"></span><div class="tabs">';
+                        var ti = 0;
+                        curWindow.tabs.forEach(function(curTab) {
+                            var altFavicon = Favicon.getFavicon(curTab.url);
+                            var favicon = (curTab.favicon != '' && curTab.favicon !== undefined) ? curTab.favicon : altFavicon;
+                            winString += '<div style="float: left"><img id="tabimgr' + (ti++) + '" windowid="winr' + i + '" class="tabimg" src_orig="' + favicon +'" src_alt="' + altFavicon + '" url="' + curTab.url + '" title="' + curTab.title.replace(/\"/g, "'") + '"/></div>';
+                        });
+                        winString += '</div></fieldset>';
+                        $('#saved').append(winString);
+                        $("#saved .tabimg").each(function(){
+                            var $this=$(this);
+                            $this.one('error', function(){
+                                $this.attr('src', $this.attr('src_alt'));
+                            });
+                            $this.attr('src', $this.attr('src_orig'));
+                        });
+                        // update tracking window db, matching by name, since
+                        // saved windows can shift position (reorder, delete)
+                        var trackedWindows = Storage.get('trackedWindows');
+                        for ( var localWindowId in trackedWindows) {
+                            if (curWindow.name === getWindowName('winl' + localWindowId)) {
+                                newTrackedWindows[localWindowId] = i;
+                            }
+                        }
+                    });
+                    // update trackedWindows
+                    Storage.set('trackedWindows', newTrackedWindows);
+                    makeSortable();
+                    updateScroll();
                 }
-                setTimeout(updateTabs, 0);
+                renderSavedWindows();
 
                 // Extra links
 
                 $('#optionslink').on('click', function(e) {
                     chrome.runtime.openOptionsPage();
-                });
-
-                $('#logoutlink').on('click', function(e) {
-                    chrome.tabs.create({
-                        url : 'https://chrometabcloud.appspot.com/logout'
-                    });
                 });
 
                 $('#ratelink').on('click', function(e) {
