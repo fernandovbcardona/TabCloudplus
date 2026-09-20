@@ -492,7 +492,7 @@ $(function() {
                     makeSortable();
                     updateScroll();
                 }
-                renderSavedWindows();
+                setTimeout(renderSavedWindows, 0);
 
                 // Extra links
 
