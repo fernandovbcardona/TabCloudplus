@@ -1,5 +1,5 @@
 Changelog:
-Version 1.2.0
+Version 2.0.0
 1) migrated to Manifest V3 (service worker background, chrome.storage.local)
 2) replaced the chrometabcloud.appspot.com cloud sync with chrome.storage.sync
    (no server dependency); added a one-time optional import from the old
