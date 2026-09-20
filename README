@@ -68,6 +68,11 @@ Engine service at chrometabcloud.appspot.com, owned by the original
 author. This fork no longer uses it for normal operation - sync now
 happens entirely through chrome.storage.sync, as described above.
 
+If you're migrating from a previous version and still have a valid login
+on chrometabcloud.appspot.com, you can pull your old data through the
+Options screen - but do it soon, since that server is not maintained by
+this fork and could go offline at any time without notice.
+
 If you have windows saved in that old cloud account:
 1) Log in to the old account in a normal browser tab:
    https://chrometabcloud.appspot.com/login
