@@ -9,6 +9,7 @@
 		<script src="favicon.js"></script>
 		<script src="storage.js"></script>
 		<script src="sync.js"></script>
+		<script src="legacy.js"></script>
 		<script src="popup.js"></script>
 
 		<style>
@@ -96,7 +97,27 @@
 			.confirm img {
 				vertical-align: middle;
 			}
-			
+
+			#onboarding {
+				display: none;
+				margin: 5px;
+				padding: 8px;
+				border: 1px solid #f0ad4e;
+				border-radius: 5px;
+				background-color: #fff8e6;
+				font-size: 0.85em;
+			}
+			#onboarding button {
+				margin-top: 4px;
+				margin-right: 4px;
+			}
+			#backendBadge {
+				display: none;
+				margin: 5px 5px 0 5px;
+				font-size: 0.7em;
+				color: #666;
+			}
+
 			#scrollbar { width: 310px; clear: both; }
 			#scrollbar .viewport { width: 300px; overflow: hidden; position: relative; height: 0; }
 			#scrollbar .overview { width: 300px; list-style: none; position: absolute; left: 0; top: 0; }
@@ -115,6 +136,8 @@
 			<div class="viewport">
 				<div class="overview">
 					<div id="current"></div>
+					<div id="onboarding"></div>
+					<div id="backendBadge"></div>
 					<div id="saved"></div>
 				</div>
 			</div>
@@ -131,7 +154,7 @@
 				<span>Please rate and comment - <a href="" id="ratelink">TabCloud</a>.</span>
 				<span>Looking for more features? Try <a href="" id="oxylink">OxyChrome</a>.</span>
 			</div>
-			<a href="" id="optionslink">Options / Help</a>
+			<a href="" id="optionslink">Options / Help</a> - <a href="" id="migrationlink" title="About the new local sync">☁ Migration info</a>
 		</div>
 		<div class="tabs" id="trash" style="margin: 10px 5px; float: left; padding: 8px; height: 18px; width: 18px; background: url(images/bin_empty.png) no-repeat 50% 50%; border: 1px solid #ccc; border-radius: 5px;"></div>
 	</body>

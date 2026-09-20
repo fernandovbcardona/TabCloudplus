@@ -23,6 +23,12 @@ window.Favicon = (function(){
         return hostname;
     }
     var providerUrl = 'https://s2.googleusercontent.com/s2/favicons?domain_url=';
+    // data: URI favicons (common for sites without a real favicon.ico) can be
+    // several KB *each* - saving them verbatim is what blows past
+    // chrome.storage.sync's per-item quota fastest. Anything data: or just
+    // plain long gets dropped; the favicon proxy above fills in at render
+    // time instead.
+    var MAX_FAVICON_LEN = 300;
     return {
         getFavicon: function (url) {
             return providerUrl + extractHostname(url);
@@ -35,6 +41,18 @@ window.Favicon = (function(){
          */
         isFaviconOf: function (url, siteUrl) {
             return url == providerUrl + extractHostname(siteUrl);
+        },
+        /**
+         * Returns a favicon URL safe to persist, or '' if it's a data: URI
+         * or otherwise too large to be worth storing.
+         * @param {string} url
+         * @returns {string}
+         */
+        clean: function (url) {
+            if (!url || url.indexOf('data:') === 0 || url.length > MAX_FAVICON_LEN) {
+                return '';
+            }
+            return url;
         }
     }
 })();

@@ -94,7 +94,7 @@ $(function() {
                                             data.tabs.splice($(ui.item[0]).index(), 0, {
                                                 url : $child.attr('url'),
                                                 title : $child.attr('title'),
-                                                favicon : !Favicon.isFaviconOf($child.attr('src'), $child.attr('url')) ? $child.attr('src') : ''
+                                                favicon : !Favicon.isFaviconOf($child.attr('src'), $child.attr('url')) ? Favicon.clean($child.attr('src')) : ''
                                             });
                                             data.name = getWindowName(newWindow);
                                             // Send new array
@@ -155,7 +155,7 @@ $(function() {
                                                 data.tabs.splice($(ui.item[0]).index(), 0, {
                                                     url : $child.attr('url'),
                                                     title : $child.attr('title'),
-                                                    favicon : !Favicon.isFaviconOf($child.attr('src'), $child.attr('url')) ? $child.attr('src') : ''
+                                                    favicon : !Favicon.isFaviconOf($child.attr('src'), $child.attr('url')) ? Favicon.clean($child.attr('src')) : ''
                                                 });
                                                 data.name = getWindowName(newWindow);
                                                 // Send new array
@@ -332,7 +332,7 @@ $(function() {
                             data.tabs.push({
                                 url : tab.url,
                                 title : tab.title,
-                                favicon : (tab.favIconUrl != '' && tab.favIconUrl !== undefined) ? tab.favIconUrl : '',
+                                favicon : Favicon.clean(tab.favIconUrl),
                                 pinned : (tab.pinned) ? true : false
                             });
                         });
@@ -445,11 +445,84 @@ $(function() {
                     updateScroll();
                 }
 
+                var showOnboarding = function() {
+                    $('#backendBadge').hide();
+                    $('#onboarding').show().html(
+                        '<strong>First time here?</strong><br/>' +
+                        'Saved windows now sync through Chrome itself (chrome.storage.sync), not through the old TabCloud cloud account &mdash; that server isn\'t run by this fork and could disappear at any time.' +
+                        '<div id="onboardingStatus" style="margin-top:6px;"></div>' +
+                        '<div>' +
+                        '<button id="onboardingImport">Check my old account</button>' +
+                        '<button id="onboardingFresh">Start fresh</button>' +
+                        '</div>'
+                    );
+                };
+
+                $(document).on('click', '#onboardingFresh', function() {
+                    Settings.set('onboardingChoice', 'dismissed');
+                    renderSavedWindows();
+                });
+
+                $(document).on('click', '#onboardingImport', function() {
+                    var $status = $('#onboardingStatus');
+                    var $btn = $(this);
+                    $btn.prop('disabled', true);
+                    $status.text('Requesting permission...');
+
+                    LegacyImport.requestPermission().then(function(granted) {
+                        if (!granted) {
+                            $status.text('Permission was not granted.');
+                            $btn.prop('disabled', false);
+                            return;
+                        }
+                        $status.text('Checking your old account...');
+                        return LegacyImport.fetchLegacyWindows().then(function(data) {
+                            if (data.status === 'error') {
+                                $status.text('Could not reach the old server. Try again later.');
+                                $btn.prop('disabled', false);
+                                return;
+                            }
+                            if (data.status !== 'loggedin') {
+                                $status.html('Not logged in to the old account. <a href="' + LegacyImport.LOGIN_URL + '" target="_blank">Log in here</a>, then try again.');
+                                $btn.prop('disabled', false);
+                                return;
+                            }
+                            if (!data.windows || data.windows.length === 0) {
+                                $status.text('No saved windows found in the old account.');
+                                Settings.set('onboardingChoice', 'dismissed');
+                                $btn.prop('disabled', false);
+                                return;
+                            }
+                            $status.text('Importing ' + data.windows.length + ' window(s)...');
+                            return LegacyImport.importAll(data.windows).then(function(result) {
+                                var msg = 'Imported ' + result.imported + ' window(s).';
+                                if (result.skipped > 0) {
+                                    msg += ' ' + result.skipped + ' were too large to sync and were skipped.';
+                                }
+                                $status.text(msg);
+                                Settings.set('onboardingChoice', 'dismissed');
+                                renderSavedWindows();
+                            });
+                        });
+                    }).catch(function() {
+                        $status.text('Something went wrong. Try again later.');
+                        $btn.prop('disabled', false);
+                    });
+                });
+
                 var TCWindows = [];
 
                 var renderSavedWindows = function() {
                     var winList = SyncStore.list();
                     TCWindows = winList;
+                    if (winList.length == 0 && Settings.get('onboardingChoice') !== 'dismissed') {
+                        $('#saved').html('');
+                        showOnboarding();
+                        updateScroll();
+                        return;
+                    }
+                    $('#onboarding').hide();
+                    $('#backendBadge').show().text('🔄 Synced locally between your Chrome-signed-in computers');
                     if (winList.length == 0) {
                         setInfo('You haven\'t saved any windows yet!');
                         return;
@@ -498,6 +571,11 @@ $(function() {
 
                 $('#optionslink').on('click', function(e) {
                     chrome.runtime.openOptionsPage();
+                });
+
+                $('#migrationlink').on('click', function(e) {
+                    e.preventDefault();
+                    chrome.tabs.create({url: chrome.runtime.getURL('options.html') + '#import'});
                 });
 
                 $('#ratelink').on('click', function(e) {

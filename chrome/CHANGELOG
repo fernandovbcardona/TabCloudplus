@@ -1,4 +1,12 @@
 Changelog:
+Version 2.1.0
+1) fixed chrome.storage.sync per-window 8KB quota errors: favicon data: URIs
+   (often several KB each) are no longer persisted, and windows that are
+   still too large are transparently split across multiple sync keys
+2) added a first-run onboarding banner explaining the new local sync and
+   offering a one-click check/import of the old TabCloud cloud account
+3) added a persistent "Migration info" link and a "synced locally" badge so
+   it's always clear which storage is in use
 Version 2.0.0
 1) migrated to Manifest V3 (service worker background, chrome.storage.local)
 2) replaced the chrometabcloud.appspot.com cloud sync with chrome.storage.sync
