@@ -43,3 +43,19 @@ Productivity
 - **tabs**: "Used to read the URL, title and favicon of tabs when the user saves a window, and to open tabs when the user restores a previously saved window."
 - **storage**: "Used to store the user's saved windows and preferences via chrome.storage.local and chrome.storage.sync."
 - **Remote code / host permission (chrometabcloud.appspot.com, optional)**: "Requested only if the user explicitly chooses to import windows saved in a previous version's cloud account. Never requested or contacted automatically."
+
+## Data usage (Developer Dashboard "Privacy practices" tab)
+
+This item handles user data: **Yes**.
+
+Check only:
+- ☑ **Web history** — the extension stores the URL and title of tabs the user explicitly chooses to save.
+
+Leave unchecked: Personally identifiable information, Health info, Financial and payment info, Authentication information, Personal communications, Location, User activity, Website content. (No content script exists, so no page content is ever read; no clicks/keys/scroll are tracked.)
+
+Certifications to confirm (all true):
+- I do not sell or transfer user data to third parties outside of approved use cases.
+- I do not use or transfer user data for purposes unrelated to my item's single purpose.
+- I do not use or transfer user data to determine creditworthiness or for lending purposes.
+
+Privacy policy URL: `https://github.com/fernandovbcardona/TabCloudplus/blob/master/PRIVACY.md`
