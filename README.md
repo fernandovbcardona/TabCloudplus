@@ -7,7 +7,8 @@
 ![Status](https://img.shields.io/badge/status-unofficial%20fork-orange)
 
 **Originally created by Connor Dunn**, with additional work (window/session tracking) by **Max Furtuna**.
-This repository is an unofficial fork that keeps the Chrome extension alive now that its Chrome Web Store listing has been taken down.
+
+The original Chrome Web Store listing was **taken down because the extension still ran on Manifest V2**, which Chrome has been phasing out and disabling for most users. This fork exists to migrate the extension to **Manifest V3** and, from there, get it republished and revived on the Chrome Web Store — not just kept alive as a locally-loaded unpacked extension.
 
 📁 The Chrome extension lives in [`chrome/`](chrome). The Firefox and Android folders in this repo are **not** maintained by this fork.
 
@@ -69,4 +70,4 @@ If you're upgrading from a previous version and still have a valid login on `chr
 
 ## 💬 A note from the fork maintainer
 
-*I use and genuinely like this extension, and when it was recently taken down from the Chrome Web Store I took the time to update it for my own use — mainly to keep it working under Manifest V3 and to stop depending on someone else's server that could disappear at any moment. Nevertheless, feel free to use it as much as you'd like.*
+*I use and genuinely like this extension, and when it was recently taken down from the Chrome Web Store for still running on Manifest V2, I took the time to migrate it to Manifest V3 and stop depending on someone else's server that could disappear at any moment — with the goal of getting it republished and revived on the Chrome Web Store, not just running it locally for myself. Nevertheless, feel free to use it as much as you'd like in the meantime.*
