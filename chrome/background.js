@@ -1,31 +1,41 @@
-if (localStorage.openin === undefined)
-	localStorage.openin = 'window';
-if (localStorage.deleteconfirm === undefined)
-	localStorage.deleteconfirm = 'yes';
-if (localStorage.encryption === undefined)
-	localStorage.encryption = 'no';
-	
-//localStorage.tempWindowNames = "{}";
-/*temp window names*/
+importScripts('storage.js');
+
+chrome.runtime.onInstalled.addListener(function () {
+    Settings.ready.then(function () {
+        if (Settings.get('openin', undefined) === undefined)
+            Settings.set('openin', 'window');
+        if (Settings.get('deleteconfirm', undefined) === undefined)
+            Settings.set('deleteconfirm', 'yes');
+        if (Settings.get('encryption', undefined) === undefined)
+            Settings.set('encryption', 'no');
+    });
+});
 
 chrome.runtime.onMessage.addListener(
     function(request, sender, sendResponse) {
-        var trackedWindows = Storage.get('trackedWindows');
-        var tempWindowNames = Storage.get('tempWindowNames');
+        if (request.method !== "open_saved_window") {
+            return false;
+        }
 
-        if (request.method  === "open_saved_window") {
-            if (localStorage.openin === 'window') {
+        (async function () {
+            await Storage.ready;
+
+            var trackedWindows = Storage.get('trackedWindows');
+            var tempWindowNames = Storage.get('tempWindowNames');
+            var openin = Settings.get('openin', 'window');
+
+            if (openin === 'window') {
                 var onWindowCreated = function (window) {
                     chrome.tabs.query({windowId: window.id}, function (tabs) {
                         chrome.tabs.remove(tabs[0].id);
                     });
                     request.tabs.forEach(function (tab) {
-                        curTab = {windowId: window.id,
+                        var curTab = {windowId: window.id,
                             url: tab.url,
                             //selected: false,
                             active:false
                         };
-                        if (localStorage.supportPinned == 1 && tab.pinned) {
+                        if (Settings.get('supportPinned', 0) == 1 && tab.pinned) {
                             curTab.pinned = true;
                         }
                         chrome.tabs.create(curTab);
@@ -46,12 +56,13 @@ chrome.runtime.onMessage.addListener(
                 } else {
                     chrome.windows.create({focused: false}, onWindowCreated);
                 }
-            } else if (localStorage.openin === 'tab') {
+            } else if (openin === 'tab') {
                 request.tabs.forEach(function (tab) {
-                                       chrome.tabs.create({url: tab.url});
-                                    });
+                    chrome.tabs.create({url: tab.url});
+                });
             }
-        }
+        })();
+
         return true;
     }
 );

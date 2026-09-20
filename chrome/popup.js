@@ -1,6 +1,8 @@
 $(function() {
     setTimeout(
-            function() {
+            async function() {
+                await Storage.ready;
+
                 // Protect against XSRF attacks
                 jQuery.ajaxSetup({
                     'beforeSend' : function(xhr) {
@@ -236,7 +238,7 @@ $(function() {
                                                         + '</legend><span class="right"><img class="windowclose" src="images/delete.png" title="Close window"><img class="windowsave" src="images/disk.png" title="Save window" /></span><div class="tabs tabslocal">';
                                                 curWindow.tabs.forEach(function(curTab) {
                                                     if (curTab.pinned !== undefined) {
-                                                        localStorage.supportPinned = 1;
+                                                        Settings.set('supportPinned', 1);
                                                     }
                                                     var altFavicon = Favicon.getFavicon(curTab.url);
                                                     var favicon = (curTab.favIconUrl != '' && curTab.favIconUrl !== undefined) ? curTab.favIconUrl : altFavicon;
@@ -400,7 +402,7 @@ $(function() {
                 });
 
                 $(document).on('click', '.windowdelete', function(e) {
-                    if (localStorage.deleteconfirm === 'yes') {
+                    if (Settings.get('deleteconfirm', 'yes') === 'yes') {
                         $(this).parent().html('<span class="confirm">Confirm: <img class="windowreallydelete" title="Delete window" src="images/delete.png" /></span>');
                     } else {
                         var windowId = parseInt($(this).parent().parent().attr('id').substring(4), 10);
@@ -434,7 +436,7 @@ $(function() {
                 });
 
                 $(document).on('click', '.windowclose', function(e) {
-                    if (localStorage.deleteconfirm === 'yes') {
+                    if (Settings.get('deleteconfirm', 'yes') === 'yes') {
                         $(this).parent().html('<span class="confirm">Confirm: <img class="windowreallyclose" title="Close window" src="images/delete.png" /></span>');
                     } else {
                         var windowId = parseInt($(this).parent().parent().attr('id').substring(4), 10);
@@ -550,6 +552,16 @@ $(function() {
                     chrome.tabs.create({
                         url : 'https://chrometabcloud.appspot.com/logout'
                     });
+                });
+
+                $('#ratelink').on('click', function(e) {
+                    e.preventDefault();
+                    chrome.tabs.create({url: 'https://chrome.google.com/extensions/detail/npecfdijgoblfcgagoijgmgejmcpnhof?from-popup'});
+                });
+
+                $('#oxylink').on('click', function(e) {
+                    e.preventDefault();
+                    chrome.tabs.create({url: 'https://chrome.google.com/webstore/detail/mhbpdpdhlphdadlbohghnncgdlbfbdho'});
                 });
 
                 // Tips

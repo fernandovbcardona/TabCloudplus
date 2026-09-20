@@ -1,9 +1,11 @@
 $(function () {
-    $('input[name="openin"][value="'+localStorage.openin+'"]').attr('checked','checked');
-    $('input[name="deleteconfirm"][value="'+localStorage.deleteconfirm+'"]').attr('checked','checked');
-    $('input[name="encryption"][value="'+localStorage.encryption+'"]').attr('checked','checked');
+    Settings.ready.then(function () {
+        $('input[name="openin"][value="'+Settings.get('openin', 'window')+'"]').attr('checked','checked');
+        $('input[name="deleteconfirm"][value="'+Settings.get('deleteconfirm', 'yes')+'"]').attr('checked','checked');
+        $('input[name="encryption"][value="'+Settings.get('encryption', 'no')+'"]').attr('checked','checked');
+    });
 
     $('input[type="radio"]').change(function (e) {
-        localStorage[$(this).attr('name')] = $(this).attr('value')
+        Settings.set($(this).attr('name'), $(this).attr('value'));
     });
 });
